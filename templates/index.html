@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Listing{% endblock %}
+
+{% block body %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 p-3 bg-warning-subtle border rounded mb-3">
+    <div class="h4 mb-0">Westlands Water District<br class="d-md-none">Employees</div>
+    <form class="d-flex" method="get" action="/">
+        <label class="visually-hidden" for="search">Search</label>
+        <input type="text" id="search" name="search" value="{{ search }}" class="form-control" placeholder="Search employees">
+        <button type="submit" class="btn btn-primary ms-2">Search</button>
+    </form>
+    <div class="small text-md-end">
+        {% if logged_in %}
+            <a class="me-2" href="/admin">Admin Dashboard</a>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Admin Login</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="table-responsive">
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-primary">
+    <tr>
+        <th>Name</th>
+        <th>Department</th>
+        <th>Position</th>
+        <th>Phone</th>
+        <th>Mobile</th>
+        <th>ID</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for emp in employees %}
+    <tr>
+        <td>
+            <div class="d-flex align-items-center">
+                {% set thumb_path = (request.state.context.image_subdir ~ '/' ~ emp.img) if emp.img else 'images/blank100.png' %}
+                <img src="/media/{{ emp.img }}" alt="" class="rounded me-2 border" style="width:40px;height:40px;object-fit:cover;">
+                <a href="/employee/{{ emp.employee_id }}">{{ emp.name }}</a>
+            </div>
+        </td>
+        <td>{{ emp.dpt }}</td>
+        <td>{{ emp.position }}</td>
+        <td>{{ emp.phone or '' }}</td>
+        <td>{{ emp.mobile or '' }}</td>
+        <td>{{ emp.employee_id or emp.id }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="text-center text-muted">No employees found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

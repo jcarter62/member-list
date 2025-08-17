@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if employee %}Edit Employee{% else %}New Employee{% endif %}{% endblock %}
+
+{% block body %}
+<div class="card">
+  <div class="card-body">
+    <h2 class="card-title h4 mb-3">{% if employee %}Edit Employee{% else %}Add New Employee{% endif %}</h2>
+    {% if error %}
+      <div class="alert alert-danger" role="alert">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="{{ form_action }}" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="name" class="form-label">Name</label>
+            <input type="text" id="name" name="name" class="form-control" value="{{ employee.name if employee else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="dpt" class="form-label">Department</label>
+            <input type="text" id="dpt" name="dpt" class="form-control" value="{{ employee.dpt if employee else '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="position" class="form-label">Position</label>
+            <input type="text" id="position" name="position" class="form-control" value="{{ employee.position if employee else '' }}">
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="phone" class="form-label">Phone</label>
+                <input type="tel" id="phone" name="phone" class="form-control" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" pattern="\([0-9]{3}\) [0-9]{3}-[0-9]{4}" minlength="14" maxlength="14" title="Format: (555) 123-4567" value="{{ employee.phone if employee else '' }}">
+            </div>
+            <div class="col-md-6">
+                <label for="mobile" class="form-label">Mobile</label>
+                <input type="tel" id="mobile" name="mobile" class="form-control" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" pattern="\([0-9]{3}\) [0-9]{3}-[0-9]{4}" minlength="14" maxlength="14" title="Format: (555) 123-4567" value="{{ employee.mobile if employee else '' }}">
+            </div>
+        </div>
+        <div class="row g-3 mt-0">
+            <div class="col-md-6">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" class="form-control" inputmode="email" autocomplete="email" value="{{ employee.email if employee else '' }}">
+            </div>
+            <div class="col-md-6">
+                <label for="url" class="form-label">URL</label>
+                <input type="text" id="url" name="url" class="form-control" value="{{ employee.url if employee else '' }}">
+            </div>
+        </div>
+        <div class="mb-3 mt-3">
+            <label for="img" class="form-label">Image file name (optional)</label>
+            <input type="text" id="img" name="img" class="form-control" value="{{ employee.img if employee else '' }}" placeholder="e.g. jdoe.jpg">
+            <div class="form-text">You can type an existing image file name or upload a new image below.</div>
+        </div>
+        <div class="mb-3">
+            <label for="img_file" class="form-label">Upload image</label>
+            <input type="file" id="img_file" name="img_file" class="form-control" accept="image/*">
+            <div class="form-text">JPEG, PNG, GIF, or WebP. Max ~5MB recommended.</div>
+            {% if employee and (employee.img or true) %}
+            <div class="mt-2">
+                {% set preview_path = (request.state.context.image_subdir ~ '/' ~ employee.img) if (employee and employee.img) else 'images/blank100.png' %}
+                <img src="{{ url_for('static', path=preview_path) }}" alt="Current image" class="img-thumbnail" style="max-height: 120px;">
+            </div>
+            {% endif %}
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="start" class="form-label">Start Date</label>
+                <input type="date" id="start" name="start" class="form-control" value="{{ employee.start.strftime('%Y-%m-%d') if employee and employee.start else '' }}">
+            </div>
+            <div class="col-md-6">
+                <label for="end" class="form-label">End Date</label>
+                <input type="date" id="end" name="end" class="form-control" value="{{ employee.end.strftime('%Y-%m-%d') if employee and employee.end else '' }}">
+            </div>
+        </div>
+        <div class="mb-3 mt-3">
+            <label for="history" class="form-label">History</label>
+            <textarea id="history" name="history" class="form-control" rows="5">{{ employee.history if employee else '' }}</textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a class="btn btn-secondary" href="/admin">Cancel</a>
+        </div>
+    </form>
+  </div>
+</div>
+<script>
+(function() {
+  function formatUSPhone(value) {
+    if (!value) return '';
+    // Keep digits only
+    let digits = ('' + value).replace(/\D/g, '');
+    // Drop leading 1 if present (US country code)
+    if (digits.length === 11 && digits.startsWith('1')) {
+      digits = digits.slice(1);
+    }
+    if (digits.length === 0) return '';
+    if (digits.length <= 3) return '(' + digits;
+    if (digits.length <= 6) return '(' + digits.slice(0,3) + ') ' + digits.slice(3);
+    return '(' + digits.slice(0,3) + ') ' + digits.slice(3,6) + '-' + digits.slice(6,10);
+  }
+
+  function attachFormatter(el) {
+    if (!el) return;
+    const handler = function() {
+      const before = el.value;
+      el.value = formatUSPhone(el.value);
+      try { if (document.activeElement === el) el.setSelectionRange(el.value.length, el.value.length); } catch (e) {}
+    };
+    el.addEventListener('input', handler);
+    el.addEventListener('blur', handler);
+    el.value = formatUSPhone(el.value);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    attachFormatter(document.getElementById('phone'));
+    attachFormatter(document.getElementById('mobile'));
+  });
+})();
+</script>
+{% endblock %}

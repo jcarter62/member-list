@@ -1,0 +1,32 @@
+/*
+ * Custom overrides layered on top of Bootstrap 5.
+ * Keep brand colours and a few helpers; avoid global resets that fight Bootstrap.
+ */
+
+.header-font {
+    color: #003668;
+    font-size: 1.1em;
+}
+
+/* Brand links (optional). Comment out if you prefer Bootstrap defaults */
+/* a { color: #003668; } */
+
+/* Legacy helper retained for some headers/sections */
+.top-table {
+    width: 100%;
+    background-color: antiquewhite;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .25rem;
+}
+
+/* Responsive helpers: Bootstrap already provides .table-responsive, but keep this as a no-op */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Optional: tweak card shadows slightly */
+.card.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;
+}

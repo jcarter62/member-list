@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center p-3 bg-warning-subtle border rounded mb-3">
+    <div class="h4 mb-0">Employee Administration</div>
+    <div class="small">
+        <a class="me-2" href="/">Return to Listing</a>
+        <a href="/logout">Logout</a>
+    </div>
+</div>
+<p><a class="btn btn-sm btn-primary" href="/admin/employee/new">Add New Employee</a></p>
+<div class="table-responsive">
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-primary">
+    <tr>
+        <th>Name</th>
+        <th>Department</th>
+        <th>Position</th>
+        <th>Phone</th>
+        <th>Mobile</th>
+        <th style="width: 120px;">Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for emp in employees %}
+    <tr>
+        <td>{{ emp.name }}</td>
+        <td>{{ emp.dpt }}</td>
+        <td>{{ emp.position }}</td>
+        <td>{{ emp.phone or '' }}</td>
+        <td>{{ emp.mobile or '' }}</td>
+        <td class="text-nowrap">
+            <div class="btn-group" role="group" aria-label="Actions">
+                <a class="btn btn-sm btn-outline-primary" href="/admin/employee/{{ emp.employee_id }}/edit" title="Edit">
+                    <img src="{{ url_for('static', path='person_edit.svg') }}" alt="Edit" style="height:1.25em;vertical-align:middle;">
+                </a>
+                <form method="post" action="/admin/employee/{{ emp.employee_id }}/delete" onsubmit="return confirm('Delete this employee?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" aria-label="Delete">
+                        <img src="{{ url_for('static', path='person_off.svg') }}" alt="Delete" style="height:1.25em;vertical-align:middle;">
+                    </button>
+                </form>
+            </div>
+        </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="text-center text-muted">No employees found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}
