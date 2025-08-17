@@ -666,7 +666,7 @@ async def create_employee(request: Request, db: sqlite3.Connection = Depends(get
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
-            None,
+            data.get("employee_id"),
             name,
             data.get("phone"),
             data.get("mobile"),
