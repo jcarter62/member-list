@@ -27,12 +27,8 @@ from typing import List, Optional
 from fastapi import (FastAPI, Depends, HTTPException, Request, status)
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from starlette.responses import FileResponse
-
-from utils.logging_config import configure_logging
 from utils.middleware import ContextProcessorMiddleware, ClientIPLoggingMiddleware
-
+from starlette.responses import FileResponse
 import sqlite3
 import base64
 import hashlib
@@ -41,6 +37,7 @@ import time
 from dotenv import load_dotenv
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.datastructures import UploadFile
+from fastapi.templating import Jinja2Templates
 
 # ---------------------------------------------------------------------------
 # Database setup
@@ -49,6 +46,15 @@ load_dotenv()  # Load environment variables from .env file if present
 
 COMPANY = os.getenv('COMPANY', 'Company')
 DB_PATH = os.getenv('DBPATH', Path(__file__).resolve().parent / "employees.db")
+
+templates_dir = os.path.join(os.getenv("APPFOLDER","~"), "templates")
+templates = Jinja2Templates(directory=templates_dir)
+# Expose company as a global in all templates
+try:
+    templates.env.globals["company"] = COMPANY
+    templates.env.globals["image_subdir"] = os.getenv("IMAGE_SUBDIR", "images")
+except Exception:
+    pass
 
 def get_db_connection() -> sqlite3.Connection:
     """Return a SQLite connection with row factory configured."""
@@ -290,9 +296,6 @@ if not static_dir.exists():
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# Jinja2 template directory
-templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent / "templates"))
-
 
 @app.on_event("startup")
 def on_startup() -> None:
@@ -514,27 +517,25 @@ def list_employees(request: Request, search: str = "", db: sqlite3.Connection = 
             "employees": employees,
             "search": search,
             "logged_in": is_authenticated(request),
+            "image_subdir": os.getenv("IMAGE_SUBDIR", "images"),
         },
     )
 
 
 @app.get("/media/{filename}", response_class=HTMLResponse)
 def media_file(filename: str, request: Request):
-    """Serve media files from the configured IMAGE_ROOT directory."""
+    """Serve media files from IMAGE_ROOT if configured, else from static/image_subdir."""
     image_root = os.getenv("IMAGE_ROOT")
     image_subdir = os.getenv("IMAGE_SUBDIR", "images")
-    fullpath = os.path.join(image_root, image_subdir, filename)
-    #
-    # return image file if it exists
+    if image_root:
+        fullpath = os.path.join(image_root, image_subdir, filename)
+    else:
+        fullpath = os.path.join(Path(__file__).resolve().parent, "static", image_subdir, filename)
     if os.path.exists(fullpath):
-        headers = {
-            "Content-Type": "image/jpeg" if filename.lower().endswith((".jpg", ".jpeg")) else "image/png",
-            "Cache-Control": "public, max-age=30",
-        }
         media_type = "image/jpeg" if filename.lower().endswith((".jpg", ".jpeg")) else "image/png"
+        headers = {"Content-Type": media_type, "Cache-Control": "public, max-age=30"}
         return FileResponse(fullpath, media_type=media_type, headers=headers)
     raise HTTPException(status_code=404, detail="File not found")
-
 
 
 @app.get("/employee/{employee_id}", response_class=HTMLResponse)
@@ -568,6 +569,7 @@ def employee_detail(employee_id: int, request: Request, db: sqlite3.Connection =
             "request": request,
             "emp": emp,
             "logged_in": is_authenticated(request),
+            "image_subdir": os.getenv("IMAGE_SUBDIR", "images"),
         },
     )
 

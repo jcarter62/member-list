@@ -1,10 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}{{ company }}{% endblock %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center p-3 bg-warning-subtle border rounded mb-3">
-    <div class="h4 mb-0">Employee Administration</div>
+    <div class="h4 mb-0">{{ company }} - Admin</div>
+    <label>Search</label>
+    <input type="text" id="member-search" name="search" value="{{ search }}">
+
     <div class="small">
         <a class="me-2" href="/">Return to Listing</a>
         <a href="/logout">Logout</a>
@@ -25,7 +28,10 @@
     </thead>
     <tbody>
     {% for emp in employees %}
-    <tr>
+    <tr class="member"
+        data-employee-id="{{ emp.employee_id }}"
+        data-employee-text="{{ emp.name.lower() }} {{ emp.dpt.lower() }} {{ emp.position.lower() }} {{ emp.phone or '' }} {{ emp.mobile or '' }} {{ emp.employee_id or emp.id }}"
+        >
         <td>{{ emp.name }}</td>
         <td>{{ emp.dpt }}</td>
         <td>{{ emp.position }}</td>
@@ -50,4 +56,5 @@
     </tbody>
 </table>
 </div>
+<script src="{{ url_for('static', path='code.js') }}"></script>
 {% endblock %}

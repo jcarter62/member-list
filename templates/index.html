@@ -4,12 +4,9 @@
 
 {% block body %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 p-3 bg-warning-subtle border rounded mb-3">
-    <div class="h4 mb-0">Westlands Water District<br class="d-md-none">Employees</div>
-    <form class="d-flex" method="get" action="/">
-        <label class="visually-hidden" for="search">Search</label>
-        <input type="text" id="search" name="search" value="{{ search }}" class="form-control" placeholder="Search employees">
-        <button type="submit" class="btn btn-primary ms-2">Search</button>
-    </form>
+    <div class="h4 mb-0">{{ company }}</div>
+    <label>Search</label>
+    <input type="text" id="member-search" name="search" value="{{ search }}">
     <div class="small text-md-end">
         {% if logged_in %}
             <a class="me-2" href="/admin">Admin Dashboard</a>
@@ -34,11 +31,17 @@
     </thead>
     <tbody>
     {% for emp in employees %}
-    <tr>
+    <tr class="member"
+        data-employee-id="{{ emp.employee_id }}"
+        data-employee-text="{{ emp.name.lower() }} {{ emp.dpt.lower() }} {{ emp.position.lower() }} {{ emp.phone or '' }} {{ emp.mobile or '' }} {{ emp.employee_id or emp.id }}"
+        >
         <td>
             <div class="d-flex align-items-center">
-                {% set thumb_path = (request.state.context.image_subdir ~ '/' ~ emp.img) if emp.img else 'images/blank100.png' %}
-                <img src="/media/{{ emp.img }}" alt="" class="rounded me-2 border" style="width:40px;height:40px;object-fit:cover;">
+                {% if emp.img %}
+                <img src="/media/{{ emp.img }}" alt="" class="rounded me-2 border" style="width:30px;height:30px;object-fit:cover;">
+                {% else %}
+                <span class="me-2 rounded border bg-light" style="display:inline-block;width:40px;height:40px;"></span>
+                {% endif %}
                 <a href="/employee/{{ emp.employee_id }}">{{ emp.name }}</a>
             </div>
         </td>
@@ -54,4 +57,5 @@
     </tbody>
 </table>
 </div>
+<script src="{{ url_for('static', path='code.js') }}"></script>
 {% endblock %}

@@ -55,10 +55,13 @@
             <label for="img_file" class="form-label">Upload image</label>
             <input type="file" id="img_file" name="img_file" class="form-control" accept="image/*">
             <div class="form-text">JPEG, PNG, GIF, or WebP. Max ~5MB recommended.</div>
-            {% if employee and (employee.img or true) %}
+            {% if employee %}
             <div class="mt-2">
-                {% set preview_path = (request.state.context.image_subdir ~ '/' ~ employee.img) if (employee and employee.img) else 'images/blank100.png' %}
-                <img src="{{ url_for('static', path=preview_path) }}" alt="Current image" class="img-thumbnail" style="max-height: 120px;">
+                {% if employee.img %}
+                <img src="/media/{{ employee.img }}" alt="Current image" class="img-thumbnail" style="max-height: 120px;">
+                {% else %}
+                <span class="d-inline-block rounded border bg-light" style="width:120px;height:120px;"></span>
+                {% endif %}
             </div>
             {% endif %}
         </div>

@@ -5,7 +5,7 @@
 
 .header-font {
     color: #003668;
-    font-size: 1.1em;
+    font-size: 1em;
 }
 
 /* Brand links (optional). Comment out if you prefer Bootstrap defaults */
@@ -18,7 +18,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: .25rem;
+    padding: .125rem;
 }
 
 /* Responsive helpers: Bootstrap already provides .table-responsive, but keep this as a no-op */
