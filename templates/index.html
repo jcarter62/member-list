@@ -15,6 +15,11 @@
             <a href="/login">Admin Login</a>
         {% endif %}
     </div>
+    <div class="small text-md-end">
+        <button onclick="downloadExcel();" title="Download as CSV">
+            <img src="{{ url_for('static', path='file_save.svg') }}" alt="Download" style="height:1.25em;vertical-align:middle;">
+        </button>
+    </div>
 </div>
 
 <div class="table-responsive">
@@ -27,6 +32,9 @@
         <th>Phone</th>
         <th>Mobile</th>
         <th>ID</th>
+        <th style="display:none;">Email</th>
+        <th style="display:none;">FirstName</th>
+        <th style="display:none;">LastName</th>
     </tr>
     </thead>
     <tbody>
@@ -50,6 +58,9 @@
         <td>{{ emp.phone or '' }}</td>
         <td>{{ emp.mobile or '' }}</td>
         <td>{{ emp.employee_id or emp.id }}</td>
+        <td style="display:none;">{{ emp.email or '' }}</td>
+        <td style="display:none;">{{ emp.name | firstname }}</td>
+        <td style="display:none;">{{ emp.name | lastname }}</td>
     </tr>
     {% else %}
     <tr><td colspan="6" class="text-center text-muted">No employees found.</td></tr>
@@ -58,4 +69,35 @@
 </table>
 </div>
 <script src="{{ url_for('static', path='code.js') }}"></script>
+<script>
+function downloadExcel() {
+    const table = document.querySelector('table');
+    // Only include rows that are visible (not filtered out)
+    const visibleRows = Array.from(table.querySelectorAll('tr')).filter(row => {
+        // Check if the row is visible by checking if style.display is not 'none'
+        return  (row.style.display !== 'none');
+    });
+//     const rows = Array.from(table.querySelectorAll('tr'));
+    const csvContent = visibleRows.map(row => {
+        const cols = Array.from(row.querySelectorAll('th, td'));
+        // add quotes around each column value to handle commas in text
+        return cols.map(col => {
+            const text = col.textContent.trim();
+            // escape double quotes by replacing them with two double quotes
+            const escapedText = text.replace(/"/g, '""');
+            return `"${escapedText}"`;
+        }).join(',');
+    }).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'members.csv';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+}
+</script>
 {% endblock %}

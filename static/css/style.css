@@ -30,3 +30,11 @@
 .card.shadow-sm {
     box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;
 }
+
+.table td, .table th {
+    font-size: 0.875em;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}

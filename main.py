@@ -45,8 +45,9 @@ from fastapi.templating import Jinja2Templates
 load_dotenv()  # Load environment variables from .env file if present
 
 COMPANY = os.getenv('COMPANY', 'Company')
-DB_PATH = os.getenv('DBPATH', Path(__file__).resolve().parent / "employees.db")
+DB_PATH = os.getenv('DB_PATH', Path(__file__).resolve().parent / "employees.db")
 
+# -- Jinja2 template setup
 templates_dir = os.path.join(os.getenv("APPFOLDER","~"), "templates")
 templates = Jinja2Templates(directory=templates_dir)
 # Expose company as a global in all templates
@@ -55,6 +56,27 @@ try:
     templates.env.globals["image_subdir"] = os.getenv("IMAGE_SUBDIR", "images")
 except Exception:
     pass
+
+def firstname(name):
+    if not name:
+        return ""
+    if ',' in name:
+        # Handle "Last, First" format
+        return name.split(',')[1].strip()
+    return name
+
+templates.env.filters["firstname"] = firstname
+
+def lastname(name):
+    if not name:
+        return ""
+    if ',' in name:
+        # Handle "Last, First" format
+        return name.split(',')[0].strip()
+    return name
+
+templates.env.filters["lastname"] = lastname
+# ---------------------------------------------------------------------------
 
 def get_db_connection() -> sqlite3.Connection:
     """Return a SQLite connection with row factory configured."""
