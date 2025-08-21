@@ -27,13 +27,17 @@
             <input type="text" id="position" name="position" class="form-control" value="{{ employee.position if employee else '' }}">
         </div>
         <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label for="phone" class="form-label">Phone</label>
-                <input type="tel" id="phone" name="phone" class="form-control" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" pattern="\([0-9]{3}\) [0-9]{3}-[0-9]{4}" minlength="14" maxlength="14" title="Format: (555) 123-4567" value="{{ employee.phone if employee else '' }}">
+                <input type="tel" id="phone" name="phone" class="form-control" inputmode="tel" autocomplete="tel" placeholder="555 123-4567" pattern="\[0-9]{3}\ [0-9]{3}-[0-9]{4}" minlength="14" maxlength="14" title="Format: (555) 123-4567" value="{{ employee.phone if employee else '' }}">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-2">
+                <label for="ext" class="form-label">Extension</label>
+                <input type="text" id="ext" name="ext" class="form-control" inputmode="text" autocomplete="text" placeholder="1234" value="{{ employee.ext if employee else '' }}">
+            </div>
+            <div class="col-md-4">
                 <label for="mobile" class="form-label">Mobile</label>
-                <input type="tel" id="mobile" name="mobile" class="form-control" inputmode="tel" autocomplete="tel" placeholder="(555) 123-4567" pattern="\([0-9]{3}\) [0-9]{3}-[0-9]{4}" minlength="14" maxlength="14" title="Format: (555) 123-4567" value="{{ employee.mobile if employee else '' }}">
+                <input type="tel" id="mobile" name="mobile" class="form-control" inputmode="tel" autocomplete="tel" placeholder="555 123-4567" pattern="\[0-9]{3}\ [0-9]{3}-[0-9]{4}" minlength="14" maxlength="14" title="Format: (555) 123-4567" value="{{ employee.mobile if employee else '' }}">
             </div>
         </div>
         <div class="row g-3 mt-0">
@@ -41,10 +45,10 @@
                 <label for="email" class="form-label">Email</label>
                 <input type="email" id="email" name="email" class="form-control" inputmode="email" autocomplete="email" value="{{ employee.email if employee else '' }}">
             </div>
-            <div class="col-md-6">
-                <label for="url" class="form-label">URL</label>
-                <input type="text" id="url" name="url" class="form-control" value="{{ employee.url if employee else '' }}">
-            </div>
+{#            <div class="col-md-6">#}
+{#                <label for="url" class="form-label">URL</label>#}
+{#                <input type="text" id="url" name="url" class="form-control" value="{{ employee.url if employee else '' }}">#}
+{#            </div>#}
         </div>
         <div class="mb-3 mt-3">
             <label for="img" class="form-label">Image file name (optional)</label>
@@ -97,9 +101,9 @@
       digits = digits.slice(1);
     }
     if (digits.length === 0) return '';
-    if (digits.length <= 3) return '(' + digits;
-    if (digits.length <= 6) return '(' + digits.slice(0,3) + ') ' + digits.slice(3);
-    return '(' + digits.slice(0,3) + ') ' + digits.slice(3,6) + '-' + digits.slice(6,10);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return digits.slice(0,3) + ' ' + digits.slice(3);
+    return digits.slice(0,3) + ' ' + digits.slice(3,6) + '-' + digits.slice(6,10);
   }
 
   function attachFormatter(el) {

@@ -30,6 +30,7 @@
         <th>Department</th>
         <th>Position</th>
         <th>Phone</th>
+        <th style="display:none;">Ext</th>
         <th>Mobile</th>
         <th>ID</th>
         <th style="display:none;">Email</th>
@@ -55,7 +56,13 @@
         </td>
         <td>{{ emp.dpt }}</td>
         <td>{{ emp.position }}</td>
-        <td>{{ emp.phone or '' }}</td>
+        <td>
+            {{ emp.phone or '' }}
+            {% if emp.ext > '' %}
+                x{{ emp.ext }}
+            {% endif %}
+        </td>
+        <td style="display:none;">{{ emp.ext }}</td>
         <td>{{ emp.mobile or '' }}</td>
         <td>{{ emp.employee_id or emp.id }}</td>
         <td style="display:none;">{{ emp.email or '' }}</td>

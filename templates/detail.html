@@ -19,7 +19,14 @@
                 <tbody>
                 <tr><th class="w-25">Department</th><td>{{ emp.dpt }}</td></tr>
                 <tr><th>Position</th><td>{{ emp.position }}</td></tr>
-                <tr><th>Phone</th><td>{{ emp.phone or '' }}</td></tr>
+                <tr><th>Phone</th>
+                    <td>
+                        {{ emp.phone or '' }}
+                        {% if emp.ext > '' %}
+                        x{{ emp.ext }}
+                        {% endif %}
+                    </td>
+                </tr>
                 <tr><th>Mobile</th><td>{{ emp.mobile or '' }}</td></tr>
                 <tr><th>Email</th><td><a href="mailto:{{ emp.email }}">{{ emp.email }}</a></td></tr>
                 <tr><th>Start Date</th><td>{{ emp.start.strftime('%Y-%m-%d') if emp.start else '' }}</td></tr>

@@ -35,7 +35,12 @@
         <td>{{ emp.name }}</td>
         <td>{{ emp.dpt }}</td>
         <td>{{ emp.position }}</td>
-        <td>{{ emp.phone or '' }}</td>
+        <td>
+            {{ emp.phone or '' }}
+            {% if emp.ext > '' %}
+            x{{ emp.ext }}
+            {% endif %}
+        </td>
         <td>{{ emp.mobile or '' }}</td>
         <td class="text-nowrap">
             <div class="btn-group" role="group" aria-label="Actions">

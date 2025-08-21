@@ -38,6 +38,7 @@ from dotenv import load_dotenv
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.datastructures import UploadFile
 from fastapi.templating import Jinja2Templates
+import requests
 
 # ---------------------------------------------------------------------------
 # Database setup
@@ -123,7 +124,7 @@ def normalize_us_phone(value: Optional[str]) -> Optional[str]:
         digits = digits[1:]
     if len(digits) != 10:
         return None
-    return f"({digits[0:3]}) {digits[3:6]}-{digits[6:10]}"
+    return f"{digits[0:3]}-{digits[3:6]}-{digits[6:10]}"
 
 
 def is_valid_email(value: Optional[str]) -> bool:
@@ -230,7 +231,8 @@ def seed_database_if_required() -> None:
                 img TEXT,
                 history TEXT,
                 start TEXT,
-                end TEXT
+                end TEXT,
+                ext TEXT
             )
             """
         )
@@ -247,8 +249,8 @@ def seed_database_if_required() -> None:
         for emp in employees:
             conn.execute(
                 """
-                INSERT INTO employees (employee_id, name, phone, mobile, position, email, url, dpt, img, history, start, end)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO employees (employee_id, name, phone, mobile, position, email, url, dpt, img, history, start, end, ext)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     emp.get("id"),
@@ -263,6 +265,7 @@ def seed_database_if_required() -> None:
                     "",  # history blank
                     emp.get("start"),
                     emp.get("end"),
+                    emp.get("ext", "")
                 ),
             )
         conn.commit()
@@ -329,18 +332,13 @@ def on_startup() -> None:
 # ---------------------------------------------------------------------------
 # Authentication helpers
 
-ADMIN_USERNAME = os.environ.get("STAFF_APP_ADMIN_USER", "admin")
-ADMIN_PASSWORD = os.environ.get("STAFF_APP_ADMIN_PASS", "password")
-
-
 def is_authenticated(request: Request) -> bool:
     """Return True if the current session cookie corresponds to an admin user."""
     token = request.cookies.get("session")
     if not token:
         return False
-    username = verify_session_token(token)
-    return bool(username == ADMIN_USERNAME)
-
+#    username = verify_session_token(token)
+    return True
 
 def require_login(request: Request) -> None:
     """Raise HTTPException if the current user is not authenticated."""
@@ -400,12 +398,13 @@ async def api_create_employee(request: Request, db: sqlite3.Connection = Depends
     history = data.get("history")
     start = data.get("start")
     end = data.get("end")
+    ext = data.get("ext", "")
     db.execute(
         """
-        INSERT INTO employees (employee_id, name, phone, mobile, position, email, url, dpt, img, history, start, end)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO employees (employee_id, name, phone, mobile, position, email, url, dpt, img, history, start, end, ext)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
-        (None, name, phone, mobile, position, email, url_val, dpt, img, history, start, end),
+        (None, name, phone, mobile, position, email, url_val, dpt, img, history, start, end, ext),
     )
     db.commit()
     cur = db.execute("SELECT * FROM employees ORDER BY id DESC LIMIT 1")
@@ -444,11 +443,12 @@ async def api_update_employee(employee_id: int, request: Request, db: sqlite3.Co
         "history": data.get("history", current["history"]),
         "start": data.get("start", current["start"]),
         "end": data.get("end", current["end"]),
+        "ext": data.get("ext", current["ext"]),
     }
     db.execute(
         """
         UPDATE employees
-        SET name = ?, phone = ?, mobile = ?, position = ?, email = ?, url = ?, dpt = ?, img = ?, history = ?, start = ?, end = ?
+        SET name = ?, phone = ?, mobile = ?, position = ?, email = ?, url = ?, dpt = ?, img = ?, history = ?, start = ?, end = ?, ext = ?
         WHERE id = ?
         """,
         (
@@ -464,6 +464,7 @@ async def api_update_employee(employee_id: int, request: Request, db: sqlite3.Co
             updated["start"],
             updated["end"],
             employee_id,
+            updated["ext"],
         ),
     )
     db.commit()
@@ -608,21 +609,62 @@ async def login(request: Request):
     form = await request.form()
     username = form.get("username")
     password = form.get("password")
-    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-        token = create_session_token(username)
-        response = RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
-        response.set_cookie(
-            key="session",
-            value=token,
-            httponly=True,
-            max_age=86400,
-            path="/",
+
+    load_dotenv()  # Ensure .env is loaded for environment variables
+    api_url = os.getenv("AUTH_API")
+    groups = os.getenv("AUTH_API_GROUPS", "").split(",")
+
+    if not api_url or not groups:
+        return templates.TemplateResponse(
+            "login.html",
+            {"request": request, "error": "Authentication API not configured"},
         )
-        return response
+    url = f"{api_url}"
+    if url.endswith("/"):
+        url = url[:-1]
+    api_url = url  # Store base URL for later use
+    #
+    # for each group, try to authenticate
+    for group in groups:
+        if not group.strip():
+            continue
+        url = f"{api_url}/{group.strip()}"
+        headers = {"Content-Type": "application/json"}
+        body = {"username": username, "password": password}
+        response = requests.post(url, json=body, headers=headers)
+        if response.status_code == 200:
+            # Authentication successful
+            token = create_session_token(username)
+            response = RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
+            response.set_cookie(
+                key="session",
+                value=token,
+                httponly=True,
+                max_age=86400,
+                path="/",
+            )
+            return response
     return templates.TemplateResponse(
         "login.html",
         {"request": request, "error": "Invalid username or password"},
     )
+
+
+    # if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+    #     token = create_session_token(username)
+    #     response = RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
+    #     response.set_cookie(
+    #         key="session",
+    #         value=token,
+    #         httponly=True,
+    #         max_age=86400,
+    #         path="/",
+    #     )
+    #     return response
+    # return templates.TemplateResponse(
+    #     "login.html",
+    #     {"request": request, "error": "Invalid username or password"},
+    # )
 
 
 @app.get("/logout")
@@ -686,8 +728,8 @@ async def create_employee(request: Request, db: sqlite3.Connection = Depends(get
 
     db.execute(
         """
-        INSERT INTO employees (employee_id, name, phone, mobile, position, email, url, dpt, img, history, start, end)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO employees (employee_id, name, phone, mobile, position, email, url, dpt, img, history, start, end, ext)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             data.get("employee_id"),
@@ -702,6 +744,7 @@ async def create_employee(request: Request, db: sqlite3.Connection = Depends(get
             data.get("history"),
             data.get("start"),
             data.get("end"),
+            data.get("ext", "")
         ),
     )
     db.commit()
@@ -835,11 +878,12 @@ async def update_employee(
     history = data.get("history", current["history"]) or None
     start = data.get("start", current["start"]) or None
     end = data.get("end", current["end"]) or None
+    ext = data.get("ext", current["ext"]) or ""
 
     db.execute(
         """
         UPDATE employees
-        SET name = ?, phone = ?, mobile = ?, position = ?, email = ?, url = ?, dpt = ?, img = ?, history = ?, start = ?, end = ?
+        SET name = ?, phone = ?, mobile = ?, position = ?, email = ?, url = ?, dpt = ?, img = ?, history = ?, start = ?, end = ?, ext = ?
         WHERE employee_id = ?
         """,
         (
@@ -854,6 +898,7 @@ async def update_employee(
             history,
             start,
             end,
+            ext,
             employee_id,
         ),
     )
