@@ -39,6 +39,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.datastructures import UploadFile
 from fastapi.templating import Jinja2Templates
 import requests
+from datetime import date, datetime
 
 # ---------------------------------------------------------------------------
 # Database setup
@@ -563,6 +564,67 @@ def media_file(filename: str, request: Request):
 
 @app.get("/employee/{employee_id}", response_class=HTMLResponse)
 def employee_detail(employee_id: int, request: Request, db: sqlite3.Connection = Depends(get_db)):
+
+    def calculate_years_of_service(start):
+        # Return a human-readable duration like "X years, Y months, Z days".
+        # Accepts None, date, or datetime; returns empty string if start missing.
+        if not start:
+            return ""
+        if isinstance(start, datetime):
+            start = start.date()
+        today = date.today()
+        # Future start dates yield zeroed duration
+        if start > today:
+            return "0 months, 0 days"
+
+        # Helpers for month arithmetic with end-of-month clamping
+        def last_day_of_month(y: int, m: int) -> int:
+            if m == 12:
+                ny, nm = y + 1, 1
+            else:
+                ny, nm = y, m + 1
+            from datetime import timedelta
+            return (date(ny, nm, 1) - timedelta(days=1)).day
+
+        def clamp_date(y: int, m: int, d: int) -> date:
+            return date(y, m, min(d, last_day_of_month(y, m)))
+
+        # Compute years
+        years = today.year - start.year
+        if (today.month, today.day) < (start.month, start.day):
+            years -= 1
+        # Anchor date after adding full years
+        anchor = clamp_date(start.year + years, start.month, start.day)
+
+        # Compute months from anchor
+        months = today.month - anchor.month
+        if today.day < anchor.day:
+            months -= 1
+        if months < 0:
+            months += 12
+        # Recompute anchor after months
+        anchor = clamp_date(anchor.year, anchor.month, anchor.day)
+        # Add months to anchor
+        y2 = anchor.year + (anchor.month + months - 1) // 12
+        m2 = (anchor.month + months - 1) % 12 + 1
+        anchor2 = clamp_date(y2, m2, anchor.day)
+
+        # Remaining days
+        days = (today - anchor2).days
+        if days < 0:
+            days = 0
+
+        parts = []
+        if years > 0:
+            parts.append(f"{years} year" if years == 1 else f"{years} years")
+        # If years is zero, still show months; otherwise only when > 0
+        if months > 0 or years == 0:
+            parts.append(f"{months} month" if months == 1 else f"{months} months")
+        # Show days when > 0, or when both years and months are zero
+        if days > 0 or (years == 0 and months == 0):
+            parts.append(f"{days} day" if days == 1 else f"{days} days")
+        return ", ".join(parts)
+
     """Render the detail page for a single employee."""
     cur = db.execute("SELECT * FROM employees WHERE employee_id = ?", (employee_id,))
     row = cur.fetchone()
@@ -586,6 +648,8 @@ def employee_detail(employee_id: int, request: Request, db: sqlite3.Connection =
             emp.end = datetime.strptime(emp.end[:10], "%Y-%m-%d")
         except Exception:
             emp.end = None
+
+    emp.years_of_service = calculate_years_of_service(emp.start)
     return templates.TemplateResponse(
         "detail.html",
         {
