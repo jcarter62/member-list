@@ -40,18 +40,32 @@
     </thead>
     <tbody>
     {% for emp in employees %}
-    <tr class="member"
+    <tr class="member" id="emp-{{ emp.id }}"
         data-employee-id="{{ emp.employee_id }}"
         data-employee-text="{{ emp.name.lower() }} {{ emp.dpt.lower() }} {{ emp.position.lower() }} {{ emp.phone or '' }} {{ emp.mobile or '' }} {{ emp.employee_id or emp.id }}"
         >
         <td>
-            <div class="d-flex align-items-center">
+            <div class="employee-hover-container"
+                 onmouseenter="showBigImage({{ emp.employee_id }});"
+                 onmouseleave="showNormalImage({{ emp.employee_id }});"
+                 ontouchstart="showBigImage({{ emp.employee_id }});"
+                 ontouchend="showNormalImage({{ emp.employee_id }});"
+                 onfocus="showBigImage({{ emp.employee_id }});"
+                 onblur="showNormalImage({{ emp.employee_id }});"
+            >
                 {% if emp.img %}
-                <img src="/media/{{ emp.img }}" alt="" class="rounded me-2 border" style="width:30px;height:30px;object-fit:cover;">
+                <span class="employee-hover-trigger" tabindex="0">
+                    <img    id="img-{{ emp.employee_id }}"
+                            src="/media/{{ emp.img }}" alt=""
+                            class="employee-thumb rounded me-2 border"
+                            style="width:2em;height:2em;object-fit:cover;"
+                    >
+                    <a href="/employee/{{ emp.employee_id }}" style="margin-left:4px;">{{ emp.name }}</a>
+                </span>
                 {% else %}
                 <span class="me-2 rounded border bg-light" style="display:inline-block;width:40px;height:40px;"></span>
-                {% endif %}
                 <a href="/employee/{{ emp.employee_id }}">{{ emp.name }}</a>
+                {% endif %}
             </div>
         </td>
         <td>{{ emp.dpt }}</td>
@@ -106,5 +120,25 @@ function downloadExcel() {
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
 }
+
+function showBigImage(employee) {
+    img = document.getElementById('img-' + employee);
+
+    img.style.width = '5em';
+    img.style.height = '5em';
+}
+
+function showNormalImage(employee) {
+    img = document.getElementById('img-' + employee);
+
+    img.style.width = '2em';
+    img.style.height = '2em';
+}
+
 </script>
+<style>
+.employee-thumb {
+    transition: width 0.5s, height 0.5s, transform 0.5s;
+}
+</style>
 {% endblock %}
