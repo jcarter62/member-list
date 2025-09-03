@@ -569,6 +569,14 @@ def media_file(filename: str, request: Request):
 
     raise HTTPException(status_code=404, detail="File not found")
 
+@app.get("/favicon.ico")
+def favicon():
+    """Serve the favicon.ico file."""
+    fullpath = os.path.join(Path(__file__).resolve().parent, "static", "favicon.svg")
+    if os.path.exists(fullpath):
+        return FileResponse(fullpath, media_type="image/svg+xml")
+    raise HTTPException(status_code=404, detail="File not found")
+
 
 @app.get("/employee/{employee_id}", response_class=HTMLResponse)
 def employee_detail(employee_id: int, request: Request, db: sqlite3.Connection = Depends(get_db)):
