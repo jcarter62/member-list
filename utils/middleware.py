@@ -17,12 +17,23 @@ class ContextProcessorMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         return response
 
+# class ClientIPLoggingMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next):
+#         client_ip = request.client.host  # Extract client IP address
+#         logging.info(f"Client IP: {client_ip} - {request.method} {request.url}")
+#         response = await call_next(request)
+#         return response
+
 class ClientIPLoggingMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host  # Extract client IP address
-        logging.info(f"Client IP: {client_ip} - {request.method} {request.url}")
+    async def dispatch(self, request, call_next):
+        # Get client IP from Cloudflare header or fallback
+        client_ip = request.headers.get("CF-Connecting-IP", request.client.host)
+        # Extract username (example: from header or session)
+        username = request.headers.get("X-Username", "anonymous")
+        logging.info(f"User: {username} | IP: {client_ip} | {request.method} {request.url}")
         response = await call_next(request)
         return response
+
 
 # Set up Jinja2Templates and inject company name as a global
 templates_dir = os.path.join(os.getenv("APPFOLDER","~"), "templates")
