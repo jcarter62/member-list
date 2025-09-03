@@ -40,6 +40,9 @@ from starlette.datastructures import UploadFile
 from fastapi.templating import Jinja2Templates
 import requests
 from datetime import date, datetime
+from utils.logging_config import configure_logging
+
+configure_logging()
 
 # ---------------------------------------------------------------------------
 # Database setup

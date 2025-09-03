@@ -27,10 +27,16 @@ class ContextProcessorMiddleware(BaseHTTPMiddleware):
 class ClientIPLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         # Get client IP from Cloudflare header or fallback
-        client_ip = request.headers.get("CF-Connecting-IP", request.client.host)
+        client_ip = request.headers.get("cf-connecting-ip", request.client.host)
         # Extract username (example: from header or session)
-        username = request.headers.get("X-Username", "anonymous")
-        logging.info(f"User: {username} | IP: {client_ip} | {request.method} {request.url}")
+        username = request.headers.get("cf-ray", "anonymous")
+        platform = request.headers.get("sec-ch-ua-platform", "")
+        if platform == "":
+            platform = request.headers.get("user-agent", "unknown")
+
+        logText = f"User: {username} | IP: {client_ip} | Platform: {platform} | {request.method} {request.url}"
+
+        logging.info(logText)
         response = await call_next(request)
         return response
 
