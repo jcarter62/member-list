@@ -558,10 +558,15 @@ def media_file(filename: str, request: Request):
         fullpath = os.path.join(image_root, image_subdir, filename)
     else:
         fullpath = os.path.join(Path(__file__).resolve().parent, "static", image_subdir, filename)
+
+    if not os.path.exists(fullpath):
+        fullpath = os.path.join(Path(__file__).resolve().parent, "static", "not-available.jpg")
+
     if os.path.exists(fullpath):
         media_type = "image/jpeg" if filename.lower().endswith((".jpg", ".jpeg")) else "image/png"
         headers = {"Content-Type": media_type, "Cache-Control": "public, max-age=30"}
         return FileResponse(fullpath, media_type=media_type, headers=headers)
+
     raise HTTPException(status_code=404, detail="File not found")
 
 
